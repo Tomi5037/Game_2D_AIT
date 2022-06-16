@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset='utf-8'>
+    <meta http-equiv='X-UA-Compatible' content='IE=edge'>
+    <title>2D game</title>
+    <meta name='viewport' content='width=device-width, initial-scale=1'>
+</head>
+
+<body>
+    <canvas id="herniPole" width="500" height="300">
+    </canvas>
+    <span id="pocitadlo">0</span>
+    <button onclick="spustHru()" id="start_button">Start</button>
+    <button onclick="pohybVlevo(pritel)">Vlevo</button>
+    <button onclick="pohybVpravo(pritel)">Vpravo</button>
+    <button onclick="pohybNahoru(pritel)">Nahoru</button>
+    <button onclick="pohybDolu(pritel)">Dolu</button>
+    <script>
+        function spustHru() {
+            herniPole.start()
+            herniObjekt = new vytvorObjekt(20, 20, "brown", 250, 280)
+            pritel = new vytvorObjekt(20, 20, "red", 150, 250)
+            herniObjekt3 = new vytvorObjekt(20, 20, "green", 150, 250)
+        }
+        var herniPole = {
+            canvas: document.getElementById("herniPole"),
+            pocitadlo: 0,
+            startButton: document.getElementById("start_button"),
+            start: function () {
+                this.startButton.disabled = "disabled"
+                this.context = this.canvas.getContext("2d")
+                this.interval = setInterval(vykresliHerniPole, 20)
+                this.listener = function (e) {
+                    if (e.keyCode == 37) {
+                        pohybVlevo(pritel)
+                    } else if (e.keyCode == 38) {
+                        pohybNahoru(pritel)
+                    } else if (e.keyCode == 39) {
+                        pohybVpravo(pritel)
+                    } else if (e.keyCode == 40) {
+                        pohybDolu(pritel)
+                    }
+                }
+                window.addEventListener("keydown", this.listener)
+            },
+            vymaz: function () {
+                this.context.clearRect(0, 0, this.canvas.width, this.canvas.height)
+            },
+            vykresli: function () {
+                this.context.fillStyle = "#00CCCC"
+                this.context.fillRect(0, 0, this.canvas.width, this.canvas.height)
+                document.getElementById("pocitadlo").innerHTML = this.pocitadlo
+            }
+        }
+        function vytvorObjekt(sirka, vyska, barva, souradniceX, souradniceY) {
+            this.sirka = sirka
+            this.vyska = vyska
+            this.x = souradniceX
+            this.y = souradniceY
+            this.deltaPohybu = 2
+            this.deltaPohybu2 = 2
+            console.log("vytvarim objekt")
+            this.vykresli = function () {
+                context = herniPole.context
+                context.fillStyle = barva
+                context.fillRect(this.x, this.y, this.sirka, this.vyska)
+            }
+        }
+
+        function vykresliHerniPole() {
+            herniPole.pocitadlo++
+            herniPole.vymaz()
+            herniPole.vykresli()
+
+            pohybNepritele(herniObjekt)
+            pritel.vykresli()
+
+            if (herniPole.pocitadlo > 500) {
+                pohybNepritele(herniObjekt3)
+
+                if (kolize(pritel, herniObjekt3)) {
+                    konecHry()
+                }
+                
+            }
+
+            if (kolize(herniObjekt, pritel)) {
+                konecHry()
+            }
+        }
+
+        function pohybNepritele(nepritel) {
+            if (nepritel.x >= herniPole.canvas.width - nepritel.sirka) {
+                nepritel.deltaPohybu *= -1
+            }
+            if (nepritel.x <= 0) {
+                nepritel.deltaPohybu *= -1
+            }
+            if (nepritel.y >= herniPole.canvas.height - nepritel.sirka) {
+                nepritel.deltaPohybu2 *= -1
+            }
+
+            if (nepritel.y <= 0) {
+                nepritel.deltaPohybu2 *= -1
+            }
+
+            nepritel.y += nepritel.deltaPohybu2
+            nepritel.x += nepritel.deltaPohybu
+            nepritel.vykresli()
+            
+        }
+
+        function pohybVlevo(objekt) {
+            if (objekt.x > 0) {
+                objekt.x -= 5
+            }
+
+        }
+        function pohybVpravo(objekt) {
+            if (objekt.x < herniPole.canvas.width - objekt.sirka) {
+                objekt.x += 5
+            }
+
+        }
+        function pohybNahoru(objekt) {
+            if (objekt.y > 0) {
+                objekt.y -= 5
+            }
+
+        }
+        function pohybDolu(objekt) {
+            if (objekt.y < herniPole.canvas.height - objekt.vyska) {
+                objekt.y += 5
+            }
+
+
+        }
+        function kolize(objekt, objekt2) {
+            objektVpravo = objekt.x + objekt.sirka / 2
+            objektVlevo = objekt.x - objekt.sirka / 2
+            objektDole = objekt.y + objekt.vyska / 2
+            objektNahore = objekt.y - objekt.vyska / 2
+            objekt2Vpravo = objekt2.x + objekt2.sirka / 2
+            objekt2Vlevo = objekt2.x - objekt2.sirka / 2
+            objekt2Dole = objekt2.y + objekt2.vyska / 2
+            objekt2Nahore = objekt2.y - objekt2.vyska / 2
+            if (objektDole > objekt2Nahore
+                && objektNahore < objekt2Dole
+                && objektVpravo > objekt2Vlevo
+                && objektVlevo < objekt2Vlevo) {
+                return true
+            } return false
+        }
+        function konecHry() {
+            console.log("Konec Hry")
+            clearInterval(herniPole.interval)
+            herniPole.startButton.disabled = false
+            herniPole.pocitadlo = 0
+            window.removeEventListener("keydown", herniPole.listener)
+            gameOverImage = new Image()
+            gameOverImage.src = 'GAMEOVER.jpg'
+            console.log(gameOverImage)
+            gameOverImage.onload = function () {
+                herniPole.context.drawImage(gameOverImage, 0, 0, herniPole.canvas.width, herniPole.canvas.height)
+            }
+        }
+
+
+
+    </script>
+</body>
+
+</html>
